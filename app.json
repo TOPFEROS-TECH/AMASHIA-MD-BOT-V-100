@@ -1,0 +1,12 @@
+{
+  "name": "AMASHIA MD V1.0.0",
+  "description": "Premium WhatsApp Bot",
+  "logo": "https://drive.google.com/uc?export=view&id=1-ONk_ZlyFGy3ne7rmZJkwk-8pcwB9WMJ",
+  "keywords": [
+    "whatsapp",
+    "bot",
+    "baileys"
+  ],
+  "success_url": "/",
+  "stack": "container"
+}
