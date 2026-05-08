@@ -31,5 +31,46 @@ sock.ev.on("creds.update", saveCreds)
 
 console.log("BOT STARTED 🚀")
 }
+sock.ev.on("messages.upsert", async ({ messages }) => {
 
+const m = messages[0]
+
+if (!m.message) return
+
+const from = m.key.remoteJid
+
+const text =
+m.message.conversation ||
+m.message.extendedTextMessage?.text || ""
+
+if (text === ".menu") {
+
+await sock.sendMessage(from, {
+
+image: {
+url: "https://drive.google.com/uc?export=view&id=1-ONk_ZlyFGy3ne7rmZJkwk-8pcwB9WMJ"
+},
+
+caption:
+`🤖 AMASHIA MD V1.0.0
+
+Bienvenue sur AMASHIA MD BOT ⚡
+
+📌 Commandes disponibles :
+
+.play
+.tiktok
+.lyrics
+.trad
+.save
+.antidelete
+.antispam
+
+🚀 MADE IN TOPFEROS TECH`
+
+})
+
+}
+
+})
 startBot()
