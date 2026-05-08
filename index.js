@@ -29,8 +29,6 @@ browser: ["AMASHIA MD", "Chrome", "1.0.0"]
 
 sock.ev.on("creds.update", saveCreds)
 
-console.log("BOT STARTED 🚀")
-}
 sock.ev.on("messages.upsert", async ({ messages }) => {
 
 const m = messages[0]
@@ -54,9 +52,9 @@ url: "https://drive.google.com/uc?export=view&id=1-ONk_ZlyFGy3ne7rmZJkwk-8pcwB9W
 caption:
 `🤖 AMASHIA MD V1.0.0
 
-Bienvenue sur AMASHIA MD BOT ⚡
+Bienvenue sur AMASHIA MD ⚡
 
-📌 Commandes disponibles :
+📌 Commandes:
 
 .play
 .tiktok
@@ -73,4 +71,3 @@ Bienvenue sur AMASHIA MD BOT ⚡
 }
 
 })
-startBot()
