@@ -9,6 +9,7 @@ const express = require("express");
 const P = require("pino");
 const fs = require("fs");
 const axios = require("axios");
+require("dotenv").config();
 
 const app = express();
 let sock = null;
@@ -29,8 +30,10 @@ app.get("/status", (req, res) => {
   });
 });
 
-app.listen(3000, () => {
-  logger.info("✅ Server Started on port 3000");
+const PORT = process.env.PORT || 3000;
+
+app.listen(PORT, () => {
+  logger.info(`✅ Server Started on port ${PORT}`);
 });
 
 // Bot initialization
@@ -44,7 +47,7 @@ async function startBot() {
       auth: state,
       logger: P({ level: "silent" }),
       browser: ["AMASHIA MD", "Chrome", "1.0.0"],
-      printQRInTerminal: true,
+      printQRInTerminal: false,
       syncFullHistory: false,
       shouldSyncHistoryMessage: () => false
     });
@@ -87,7 +90,8 @@ async function startBot() {
           if (!m.message || m.key.fromMe || isJidBroadcast(m.key.remoteJid)) continue;
 
           const from = m.key.remoteJid;
-          const text = m.message.conversation ||
+          const text =
+            m.message.conversation ||
             m.message.extendedTextMessage?.text ||
             m.message.imageMessage?.caption ||
             "";
@@ -178,7 +182,6 @@ async function handleCommands(sock, from, text, message) {
           await sock.sendMessage(from, {
             text: `🎧 Téléchargement de: ${param}...\n\n⏳ Veuillez patienter...`
           });
-          // TODO: Intégrer API de téléchargement (Spotify, YouTube Music, etc.)
         }
         break;
 
@@ -191,7 +194,6 @@ async function handleCommands(sock, from, text, message) {
           await sock.sendMessage(from, {
             text: `📹 Téléchargement de la vidéo TikTok...\n\n⏳ Veuillez patienter...`
           });
-          // TODO: Intégrer API TikTok downloader
         }
         break;
 
@@ -204,7 +206,6 @@ async function handleCommands(sock, from, text, message) {
           await sock.sendMessage(from, {
             text: `🎵 Recherche des paroles: ${param}...\n\n⏳ Veuillez patienter...`
           });
-          // TODO: Intégrer API de paroles (Genius, AZLyrics, etc.)
         }
         break;
 
@@ -217,7 +218,6 @@ async function handleCommands(sock, from, text, message) {
           await sock.sendMessage(from, {
             text: `🌍 Traduction de: ${param}...\n\n⏳ Veuillez patienter...`
           });
-          // TODO: Intégrer API de traduction (Google Translate, etc.)
         }
         break;
 
@@ -225,21 +225,18 @@ async function handleCommands(sock, from, text, message) {
         await sock.sendMessage(from, {
           text: "📥 Statuts sauvegardés!\n\n✅ Auto Save Status: Actif"
         });
-        // TODO: Implémenter logique de sauvegarde de statuts
         break;
 
       case "antidelete":
         await sock.sendMessage(from, {
-          text: "🛡️ Anti suppression de message: Activé ✅\n\nLes messages supprimés seront sauvegardés."
+          text: "🛡️ Anti suppression de message: Activé ✅"
         });
-        // TODO: Implémenter logique anti-suppression
         break;
 
       case "antispam":
         await sock.sendMessage(from, {
-          text: "🛡️ Anti spam: Activé ✅\n\nLes messages spam seront bloqués."
+          text: "🛡️ Anti spam: Activé ✅"
         });
-        // TODO: Implémenter logique anti-spam
         break;
 
       default:
@@ -250,6 +247,7 @@ async function handleCommands(sock, from, text, message) {
     }
   } catch (error) {
     logger.error("❌ Error handling command:", error);
+
     await sock.sendMessage(from, {
       text: "❌ Erreur lors du traitement de la commande."
     });
