@@ -24,7 +24,107 @@ const logger = P({ level: "info" });
 
 // Server
 app.get("/", (req, res) => {
-  res.send("🤖 AMASHIA MD BOT ONLINE 🚀");
+
+  res.send(`
+  <html>
+  <head>
+    <title>AMASHIA MD</title>
+
+    <style>
+
+      body{
+        background:#0f0f0f;
+        color:white;
+        font-family:Arial;
+        text-align:center;
+        padding-top:60px;
+      }
+
+      .box{
+        background:#1c1c1c;
+        width:350px;
+        margin:auto;
+        padding:30px;
+        border-radius:15px;
+        box-shadow:0 0 20px #00ffcc;
+      }
+
+      input{
+        width:90%;
+        padding:12px;
+        border:none;
+        border-radius:10px;
+        margin-top:15px;
+        font-size:18px;
+      }
+
+      button{
+        margin-top:20px;
+        padding:12px 25px;
+        border:none;
+        border-radius:10px;
+        background:#00ffcc;
+        color:black;
+        font-size:18px;
+        cursor:pointer;
+        font-weight:bold;
+      }
+
+      .code{
+        margin-top:20px;
+        font-size:30px;
+        color:#00ffcc;
+        font-weight:bold;
+      }
+
+    </style>
+  </head>
+
+  <body>
+
+    <div class="box">
+
+      <h1>🤖 AMASHIA MD</h1>
+
+      <p>Connect WhatsApp With Pairing Code</p>
+
+      <input
+        type="text"
+        id="number"
+        placeholder="509XXXXXXXX"
+      >
+
+      <br>
+
+      <button onclick="connectBot()">
+        CONNECT
+      </button>
+
+      <div class="code" id="code"></div>
+
+    </div>
+
+    <script>
+
+      async function connectBot(){
+
+        const number =
+          document.getElementById("number").value;
+
+        const res =
+          await fetch("/pair?id=" + number + "&number=" + number);
+
+        const data = await res.json();
+
+        document.getElementById("code").innerHTML =
+          data.pairing_code || data.error;
+      }
+
+    </script>
+
+  </body>
+  </html>
+  `);
 });
 
 app.get("/status", (req, res) => {
