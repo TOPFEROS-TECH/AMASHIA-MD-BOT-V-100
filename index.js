@@ -2,13 +2,13 @@ const {
   default: makeWASocket,
   useMultiFileAuthState,
   DisconnectReason,
-  isJidBroadcast
+  isJidBroadcast,
+  fetchLatestBaileysVersion
 } = require("@whiskeysockets/baileys");
 
 const express = require("express");
 const P = require("pino");
 const fs = require("fs");
-const axios = require("axios");
 require("dotenv").config();
 
 const app = express();
@@ -16,10 +16,10 @@ const app = express();
 const sessions = {};
 const connectedUsers = new Set();
 
-// Logger configuration
+// Logger
 const logger = P({ level: "info" });
 
-// REST API Server
+// Server
 app.get("/", (req, res) => {
   res.send("🤖 AMASHIA MD BOT ONLINE 🚀");
 });
@@ -38,9 +38,11 @@ app.listen(PORT, () => {
   logger.info(`✅ Server Started on port ${PORT}`);
 });
 
-// Multi Session Bot Initialization
+// Start Bot
 async function startBot(sessionId = "main") {
+
   try {
+
     logger.info(`🤖 Starting Session: ${sessionId}`);
 
     // Create sessions folder
@@ -50,7 +52,7 @@ async function startBot(sessionId = "main") {
 
     const sessionPath = `./sessions/${sessionId}`;
 
-    // Create individual session folder
+    // Create session folder
     if (!fs.existsSync(sessionPath)) {
       fs.mkdirSync(sessionPath);
     }
@@ -58,7 +60,11 @@ async function startBot(sessionId = "main") {
     const { state, saveCreds } =
       await useMultiFileAuthState(sessionPath);
 
+    const { version } =
+      await fetchLatestBaileysVersion();
+
     const sock = makeWASocket({
+      version,
       auth: state,
       logger: P({ level: "silent" }),
       browser: ["AMASHIA MD", "Chrome", "1.0.0"],
@@ -72,8 +78,33 @@ async function startBot(sessionId = "main") {
     // Save credentials
     sock.ev.on("creds.update", saveCreds);
 
-    // Connection status
+    // Pairing Code
+    if (!sock.authState.creds.registered) {
+
+      const phoneNumber =
+        process.env.PHONE_NUMBER;
+
+      setTimeout(async () => {
+
+        const code =
+          await sock.requestPairingCode(phoneNumber);
+
+        logger.info(`
+╔══════════════════════╗
+║   🔗 PAIRING CODE 🔗  ║
+╚══════════════════════╝
+
+➡️ CODE: ${code}
+
+📲 WhatsApp > Linked Devices
+`);
+
+      }, 3000);
+    }
+
+    // Connection update
     sock.ev.on("connection.update", async (update) => {
+
       const { connection, lastDisconnect } = update;
 
       if (connection === "connecting") {
@@ -81,29 +112,36 @@ async function startBot(sessionId = "main") {
       }
 
       if (connection === "open") {
-        logger.info(`✅ ${sessionId} Connected to WhatsApp!`);
+        logger.info(`✅ ${sessionId} Connected to WhatsApp`);
       }
 
       if (connection === "close") {
+
         if (
           lastDisconnect?.error?.output?.statusCode !==
           DisconnectReason.loggedOut
         ) {
+
           logger.warn(`⚠️ Reconnecting ${sessionId}...`);
 
           setTimeout(() => {
             startBot(sessionId);
           }, 3000);
+
         } else {
-          logger.error(`❌ ${sessionId} Logged out.`);
+
+          logger.error(`❌ ${sessionId} Logged out`);
         }
       }
     });
 
-    // Welcome message on new user connection
+    // Welcome new contacts
     sock.ev.on("contacts.upsert", async (contacts) => {
+
       for (const contact of contacts) {
+
         if (!connectedUsers.has(contact.id)) {
+
           connectedUsers.add(contact.id);
 
           await sendWelcomeMessage(sock, contact.id);
@@ -111,16 +149,18 @@ async function startBot(sessionId = "main") {
       }
     });
 
-    // Message handler
+    // Messages
     sock.ev.on("messages.upsert", async ({ messages }) => {
+
       for (const m of messages) {
+
         try {
+
           if (
             !m.message ||
             m.key.fromMe ||
             isJidBroadcast(m.key.remoteJid)
-          )
-            continue;
+          ) continue;
 
           const from = m.key.remoteJid;
 
@@ -132,17 +172,28 @@ async function startBot(sessionId = "main") {
 
           logger.info(`📨 ${sessionId} => ${from}: ${text}`);
 
-          // Command handling
           if (text.startsWith(".")) {
-            await handleCommands(sock, from, text, m);
+
+            await handleCommands(
+              sock,
+              from,
+              text,
+              m
+            );
           }
+
         } catch (error) {
-          logger.error("❌ Error processing message:", error);
+
+          logger.error(
+            "❌ Error processing message:",
+            error
+          );
         }
       }
     });
 
   } catch (error) {
+
     logger.error("❌ Error starting bot:", error);
 
     setTimeout(() => {
@@ -151,39 +202,59 @@ async function startBot(sessionId = "main") {
   }
 }
 
-// Send welcome message
+// Welcome Message
 async function sendWelcomeMessage(sock, jid) {
+
   try {
-    const welcomeText = `🤖 *AMASHIA MD V1.0.0* ⚡
 
-*Bienvenue sur AMASHIA MD!* 🎉
+    const welcomeText = `
+╔══════════════════════╗
+║    🤖 AMASHIA MD 🤖   ║
+║      VERSION 1.0.0    ║
+╚══════════════════════╝
 
-Merci de t'être connecté au bot WhatsApp le plus rapide et stable!
+╭━━〔 ⚡ WELCOME ⚡ 〕━━⬣
+┃ 🎉 Bienvenue sur
+┃ 🤖 AMASHIA MD BOT
+┃ 🚀 Le bot WhatsApp
+┃ ⚡ le plus rapide & stable
+╰━━━━━━━━━━━━━━━━━━⬣
 
-📌 *Commandes disponibles:*
+╭━━〔 📌 COMMANDES 📌 〕━━⬣
 
-🎧 *Média*
-• .play <titre> - Télécharger une chanson
-• .tiktok <url> - Télécharger une vidéo TikTok
-• .lyrics <titre> - Obtenir les paroles
+┃ 🎧 MEDIA
+┃ ━━━━━━━━━━━━━━━
+┃ ➤ .play <titre>
+┃ ➤ .tiktok <url>
+┃ ➤ .lyrics <titre>
 
-🌍 *Traduction*
-• .trad <texte> - Traduire un texte
+┃ 🌍 TRADUCTION
+┃ ━━━━━━━━━━━━━━━
+┃ ➤ .trad <texte>
 
-📥 *Statut*
-• .save - Sauvegarder les statuts
-• Auto Save Status - Actif ✅
+┃ 📥 STATUS
+┃ ━━━━━━━━━━━━━━━
+┃ ➤ .save
+┃ ➤ Auto Save Status ✅
 
-🛡️ *Sécurité*
-• .antidelete - Anti suppression de message
-• .antispam - Anti spam
+┃ 🛡️ SECURITE
+┃ ━━━━━━━━━━━━━━━
+┃ ➤ .antidelete
+┃ ➤ .antispam
 
-👁️ *Autres*
-• Vue unique automatique ✅
-• .menu - Afficher ce menu
+┃ 👁️ AUTRES
+┃ ━━━━━━━━━━━━━━━
+┃ ➤ .menu
+┃ ➤ .alive
 
-🚀 *MADE IN TOPFEROS TECH*
-👨‍💻 Développé avec ❤️`;
+╰━━━━━━━━━━━━━━━━━━⬣
+
+╭━━〔 🚀 POWERED BY 🚀 〕━━⬣
+┃ 👨‍💻 TOPFEROS TECH
+┃ ⚡ Fast • Stable • Powerful
+┃ 🌐 Multi Device Enabled
+╰━━━━━━━━━━━━━━━━━━⬣
+`;
 
     await sock.sendMessage(jid, {
       image: {
@@ -192,126 +263,227 @@ Merci de t'être connecté au bot WhatsApp le plus rapide et stable!
       caption: welcomeText
     });
 
-    logger.info(`✅ Welcome message sent to ${jid}`);
-
   } catch (error) {
-    logger.error("❌ Error sending welcome message:", error);
+
+    logger.error(
+      "❌ Error sending welcome message:",
+      error
+    );
   }
 }
 
-// Command handler
-async function handleCommands(sock, from, text, message) {
-  const args = text.slice(1).split(" ");
+// Commands
+async function handleCommands(
+  sock,
+  from,
+  text,
+  message
+) {
 
-  const command = args[0].toLowerCase();
+  const args =
+    text.slice(1).split(" ");
 
-  const param = args.slice(1).join(" ");
+  const command =
+    args[0].toLowerCase();
+
+  const param =
+    args.slice(1).join(" ");
 
   try {
+
     switch (command) {
 
       case "menu":
+
         await sendWelcomeMessage(sock, from);
+
+        break;
+
+      case "alive":
+
+        await sock.sendMessage(from, {
+          text: `
+╭━━〔 🤖 BOT STATUS 🤖 〕━━⬣
+┃ ✅ Bot Online
+┃ ⚡ Speed Stable
+┃ 🚀 Railway Hosting
+╰━━━━━━━━━━━━━━━━━━⬣
+`
+        });
+
         break;
 
       case "play":
+
         if (!param) {
+
           await sock.sendMessage(from, {
-            text: "❌ Format: .play <titre de la chanson>"
+            text: `
+╭━━〔 ❌ ERROR ❌ 〕━━⬣
+┃ ➤ .play <titre>
+╰━━━━━━━━━━━━━━━━━━⬣
+`
           });
+
         } else {
+
           await sock.sendMessage(from, {
-            text:
-              `🎧 Téléchargement de: ${param}...\n\n` +
-              `⏳ Veuillez patienter...`
+            text: `
+╭━━〔 🎧 PLAY MUSIC 🎧 〕━━⬣
+┃ 🔍 Recherche:
+┃ ➤ ${param}
+┃ ⏳ Veuillez patienter...
+╰━━━━━━━━━━━━━━━━━━⬣
+`
           });
         }
+
         break;
 
       case "tiktok":
+
         if (!param) {
+
           await sock.sendMessage(from, {
-            text: "❌ Format: .tiktok <URL TikTok>"
+            text: `
+╭━━〔 ❌ ERROR ❌ 〕━━⬣
+┃ ➤ .tiktok <url>
+╰━━━━━━━━━━━━━━━━━━⬣
+`
           });
+
         } else {
+
           await sock.sendMessage(from, {
-            text:
-              `📹 Téléchargement TikTok...\n\n` +
-              `⏳ Veuillez patienter...`
+            text: `
+╭━━〔 📹 TIKTOK DL 📹 〕━━⬣
+┃ ⏳ Téléchargement...
+╰━━━━━━━━━━━━━━━━━━⬣
+`
           });
         }
+
         break;
 
       case "lyrics":
+
         if (!param) {
+
           await sock.sendMessage(from, {
-            text: "❌ Format: .lyrics <titre>"
+            text: `
+╭━━〔 ❌ ERROR ❌ 〕━━⬣
+┃ ➤ .lyrics <titre>
+╰━━━━━━━━━━━━━━━━━━⬣
+`
           });
+
         } else {
+
           await sock.sendMessage(from, {
-            text:
-              `🎵 Recherche des paroles: ${param}...\n\n` +
-              `⏳ Veuillez patienter...`
+            text: `
+╭━━〔 🎵 LYRICS 🎵 〕━━⬣
+┃ 🔍 ${param}
+┃ ⏳ Recherche...
+╰━━━━━━━━━━━━━━━━━━⬣
+`
           });
         }
+
         break;
 
       case "trad":
+
         if (!param) {
+
           await sock.sendMessage(from, {
-            text: "❌ Format: .trad <texte>"
+            text: `
+╭━━〔 ❌ ERROR ❌ 〕━━⬣
+┃ ➤ .trad <texte>
+╰━━━━━━━━━━━━━━━━━━⬣
+`
           });
+
         } else {
+
           await sock.sendMessage(from, {
-            text:
-              `🌍 Traduction de: ${param}...\n\n` +
-              `⏳ Veuillez patienter...`
+            text: `
+╭━━〔 🌍 TRADUCTION 🌍 〕━━⬣
+┃ ⏳ Traduction...
+╰━━━━━━━━━━━━━━━━━━⬣
+`
           });
         }
+
         break;
 
       case "save":
+
         await sock.sendMessage(from, {
-          text:
-            "📥 Statuts sauvegardés!\n\n" +
-            "✅ Auto Save Status: Actif"
+          text: `
+╭━━〔 📥 STATUS SAVE 📥 〕━━⬣
+┃ ✅ Status sauvegardé
+╰━━━━━━━━━━━━━━━━━━⬣
+`
         });
+
         break;
 
       case "antidelete":
+
         await sock.sendMessage(from, {
-          text:
-            "🛡️ Anti suppression activé ✅"
+          text: `
+╭━━〔 🛡️ ANTIDELETE 🛡️ 〕━━⬣
+┃ ✅ Activé
+╰━━━━━━━━━━━━━━━━━━⬣
+`
         });
+
         break;
 
       case "antispam":
+
         await sock.sendMessage(from, {
-          text:
-            "🛡️ Anti spam activé ✅"
+          text: `
+╭━━〔 🛡️ ANTISPAM 🛡️ 〕━━⬣
+┃ ✅ Activé
+╰━━━━━━━━━━━━━━━━━━⬣
+`
         });
+
         break;
 
       default:
+
         await sock.sendMessage(from, {
-          text:
-            `❌ Commande inconnue: ${text}\n\n` +
-            `Tapez .menu pour voir les commandes.`
+          text: `
+╭━━〔 ❌ ERROR ❌ 〕━━⬣
+┃ Commande inconnue
+┃ Tapez .menu
+╰━━━━━━━━━━━━━━━━━━⬣
+`
         });
+
         break;
     }
 
   } catch (error) {
 
-    logger.error("❌ Error handling command:", error);
+    logger.error(
+      "❌ Error handling command:",
+      error
+    );
 
     await sock.sendMessage(from, {
-      text: "❌ Erreur lors du traitement."
+      text: `
+╭━━〔 ❌ SYSTEM ERROR ❌ 〕━━⬣
+┃ Réessayez plus tard
+╰━━━━━━━━━━━━━━━━━━⬣
+`
     });
   }
 }
 
-// Start Main Session
+// Start Bot
 startBot("main").catch(err => {
   logger.error("❌ Fatal error:", err);
 });
