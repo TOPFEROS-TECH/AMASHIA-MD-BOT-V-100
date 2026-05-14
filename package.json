@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "description": "Premium WhatsApp Bot - AMASHIA MD V1.0.0",
   "main": "index.js",
+  "type": "commonjs",
   "scripts": {
     "start": "node index.js",
     "dev": "nodemon index.js"
@@ -26,6 +27,6 @@
     "nodemon": "^3.0.2"
   },
   "engines": {
-    "node": ">=14.0.0"
+    "node": ">=18"
   }
 }
