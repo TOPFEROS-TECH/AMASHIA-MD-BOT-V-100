@@ -483,7 +483,84 @@ async function handleCommands(
   }
 }
 
-// Start Bot
+// Create New Session API
+app.get("/pair", async (req, res) => {
+
+  const id = req.query.id;
+  const number = req.query.number;
+
+  if (!id || !number) {
+
+    return res.json({
+      error: "Use: /pair?id=user1&number=509XXXXXXXX"
+    });
+  }
+
+  try {
+
+    if (sessions[id]) {
+
+      return res.json({
+        error: "Session already exists"
+      });
+    }
+
+    logger.info(`🚀 Creating Session ${id}`);
+
+    // Create sessions folder
+    if (!fs.existsSync("./sessions")) {
+      fs.mkdirSync("./sessions");
+    }
+
+    const sessionPath = `./sessions/${id}`;
+
+    // Create individual folder
+    if (!fs.existsSync(sessionPath)) {
+      fs.mkdirSync(sessionPath);
+    }
+
+    const { state, saveCreds } =
+      await useMultiFileAuthState(sessionPath);
+
+    const { version } =
+      await fetchLatestBaileysVersion();
+
+    const sock = makeWASocket({
+      version,
+      auth: state,
+      logger: P({ level: "silent" }),
+      browser: ["AMASHIA MD", "Chrome", "1.0.0"],
+      printQRInTerminal: false
+    });
+
+    sessions[id] = sock;
+
+    sock.ev.on("creds.update", saveCreds);
+
+    setTimeout(async () => {
+
+      const code =
+        await sock.requestPairingCode(number);
+
+      res.json({
+        session: id,
+        number: number,
+        pairing_code: code
+      });
+
+    }, 3000);
+
+  } catch (error) {
+
+    logger.error(error);
+
+    res.json({
+      error: "Failed to create session"
+    });
+  }
+});
+
+// Start Main Session
 startBot("main").catch(err => {
   logger.error("❌ Fatal error:", err);
 });
