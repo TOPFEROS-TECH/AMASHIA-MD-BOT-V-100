@@ -12,7 +12,8 @@ const axios = require("axios");
 require("dotenv").config();
 
 const app = express();
-let sock = null;
+
+const sessions = {};
 const connectedUsers = new Set();
 
 // Logger configuration
@@ -25,7 +26,8 @@ app.get("/", (req, res) => {
 
 app.get("/status", (req, res) => {
   res.json({
-    status: sock ? "connected" : "disconnected",
+    sessions: Object.keys(sessions),
+    totalSessions: Object.keys(sessions).length,
     connectedUsers: Array.from(connectedUsers)
   });
 });
@@ -36,14 +38,27 @@ app.listen(PORT, () => {
   logger.info(`✅ Server Started on port ${PORT}`);
 });
 
-// Bot initialization
-async function startBot() {
+// Multi Session Bot Initialization
+async function startBot(sessionId = "main") {
   try {
-    logger.info("🤖 Starting AMASHIA MD Bot...");
+    logger.info(`🤖 Starting Session: ${sessionId}`);
 
-    const { state, saveCreds } = await useMultiFileAuthState("./session");
+    // Create sessions folder
+    if (!fs.existsSync("./sessions")) {
+      fs.mkdirSync("./sessions");
+    }
 
-    sock = makeWASocket({
+    const sessionPath = `./sessions/${sessionId}`;
+
+    // Create individual session folder
+    if (!fs.existsSync(sessionPath)) {
+      fs.mkdirSync(sessionPath);
+    }
+
+    const { state, saveCreds } =
+      await useMultiFileAuthState(sessionPath);
+
+    const sock = makeWASocket({
       auth: state,
       logger: P({ level: "silent" }),
       browser: ["AMASHIA MD", "Chrome", "1.0.0"],
@@ -52,7 +67,9 @@ async function startBot() {
       shouldSyncHistoryMessage: () => false
     });
 
-    // Save credentials on update
+    sessions[sessionId] = sock;
+
+    // Save credentials
     sock.ev.on("creds.update", saveCreds);
 
     // Connection status
@@ -60,15 +77,25 @@ async function startBot() {
       const { connection, lastDisconnect } = update;
 
       if (connection === "connecting") {
-        logger.info("🔄 Connecting to WhatsApp...");
-      } else if (connection === "open") {
-        logger.info("✅ Connected to WhatsApp!");
-      } else if (connection === "close") {
-        if (lastDisconnect?.error?.output?.statusCode !== DisconnectReason.loggedOut) {
-          logger.warn("⚠️ Connection closed. Reconnecting...");
-          setTimeout(() => startBot(), 3000);
+        logger.info(`🔄 Connecting ${sessionId}...`);
+      }
+
+      if (connection === "open") {
+        logger.info(`✅ ${sessionId} Connected to WhatsApp!`);
+      }
+
+      if (connection === "close") {
+        if (
+          lastDisconnect?.error?.output?.statusCode !==
+          DisconnectReason.loggedOut
+        ) {
+          logger.warn(`⚠️ Reconnecting ${sessionId}...`);
+
+          setTimeout(() => {
+            startBot(sessionId);
+          }, 3000);
         } else {
-          logger.error("❌ Logged out. Please restart bot.");
+          logger.error(`❌ ${sessionId} Logged out.`);
         }
       }
     });
@@ -78,7 +105,8 @@ async function startBot() {
       for (const contact of contacts) {
         if (!connectedUsers.has(contact.id)) {
           connectedUsers.add(contact.id);
-          await sendWelcomeMessage(contact.id);
+
+          await sendWelcomeMessage(sock, contact.id);
         }
       }
     });
@@ -87,16 +115,22 @@ async function startBot() {
     sock.ev.on("messages.upsert", async ({ messages }) => {
       for (const m of messages) {
         try {
-          if (!m.message || m.key.fromMe || isJidBroadcast(m.key.remoteJid)) continue;
+          if (
+            !m.message ||
+            m.key.fromMe ||
+            isJidBroadcast(m.key.remoteJid)
+          )
+            continue;
 
           const from = m.key.remoteJid;
+
           const text =
             m.message.conversation ||
             m.message.extendedTextMessage?.text ||
             m.message.imageMessage?.caption ||
             "";
 
-          logger.info(`📨 Message from ${from}: ${text}`);
+          logger.info(`📨 ${sessionId} => ${from}: ${text}`);
 
           // Command handling
           if (text.startsWith(".")) {
@@ -110,12 +144,15 @@ async function startBot() {
 
   } catch (error) {
     logger.error("❌ Error starting bot:", error);
-    setTimeout(() => startBot(), 5000);
+
+    setTimeout(() => {
+      startBot(sessionId);
+    }, 5000);
   }
 }
 
-// Send welcome message to new users
-async function sendWelcomeMessage(jid) {
+// Send welcome message
+async function sendWelcomeMessage(sock, jid) {
   try {
     const welcomeText = `🤖 *AMASHIA MD V1.0.0* ⚡
 
@@ -150,12 +187,13 @@ Merci de t'être connecté au bot WhatsApp le plus rapide et stable!
 
     await sock.sendMessage(jid, {
       image: {
-        url: "https://drive.google.com/uc?export=view&id=1-ONk_ZlyFGy3ne7rmZJkwk-8pcwB9WMJ"
+        url: process.env.BOT_IMAGE_URL
       },
       caption: welcomeText
     });
 
     logger.info(`✅ Welcome message sent to ${jid}`);
+
   } catch (error) {
     logger.error("❌ Error sending welcome message:", error);
   }
@@ -164,13 +202,16 @@ Merci de t'être connecté au bot WhatsApp le plus rapide et stable!
 // Command handler
 async function handleCommands(sock, from, text, message) {
   const args = text.slice(1).split(" ");
+
   const command = args[0].toLowerCase();
+
   const param = args.slice(1).join(" ");
 
   try {
     switch (command) {
+
       case "menu":
-        await sendWelcomeMessage(from);
+        await sendWelcomeMessage(sock, from);
         break;
 
       case "play":
@@ -180,7 +221,9 @@ async function handleCommands(sock, from, text, message) {
           });
         } else {
           await sock.sendMessage(from, {
-            text: `🎧 Téléchargement de: ${param}...\n\n⏳ Veuillez patienter...`
+            text:
+              `🎧 Téléchargement de: ${param}...\n\n` +
+              `⏳ Veuillez patienter...`
           });
         }
         break;
@@ -192,7 +235,9 @@ async function handleCommands(sock, from, text, message) {
           });
         } else {
           await sock.sendMessage(from, {
-            text: `📹 Téléchargement de la vidéo TikTok...\n\n⏳ Veuillez patienter...`
+            text:
+              `📹 Téléchargement TikTok...\n\n` +
+              `⏳ Veuillez patienter...`
           });
         }
         break;
@@ -200,11 +245,13 @@ async function handleCommands(sock, from, text, message) {
       case "lyrics":
         if (!param) {
           await sock.sendMessage(from, {
-            text: "❌ Format: .lyrics <titre de la chanson>"
+            text: "❌ Format: .lyrics <titre>"
           });
         } else {
           await sock.sendMessage(from, {
-            text: `🎵 Recherche des paroles: ${param}...\n\n⏳ Veuillez patienter...`
+            text:
+              `🎵 Recherche des paroles: ${param}...\n\n` +
+              `⏳ Veuillez patienter...`
           });
         }
         break;
@@ -212,50 +259,59 @@ async function handleCommands(sock, from, text, message) {
       case "trad":
         if (!param) {
           await sock.sendMessage(from, {
-            text: "❌ Format: .trad <texte à traduire>"
+            text: "❌ Format: .trad <texte>"
           });
         } else {
           await sock.sendMessage(from, {
-            text: `🌍 Traduction de: ${param}...\n\n⏳ Veuillez patienter...`
+            text:
+              `🌍 Traduction de: ${param}...\n\n` +
+              `⏳ Veuillez patienter...`
           });
         }
         break;
 
       case "save":
         await sock.sendMessage(from, {
-          text: "📥 Statuts sauvegardés!\n\n✅ Auto Save Status: Actif"
+          text:
+            "📥 Statuts sauvegardés!\n\n" +
+            "✅ Auto Save Status: Actif"
         });
         break;
 
       case "antidelete":
         await sock.sendMessage(from, {
-          text: "🛡️ Anti suppression de message: Activé ✅"
+          text:
+            "🛡️ Anti suppression activé ✅"
         });
         break;
 
       case "antispam":
         await sock.sendMessage(from, {
-          text: "🛡️ Anti spam: Activé ✅"
+          text:
+            "🛡️ Anti spam activé ✅"
         });
         break;
 
       default:
         await sock.sendMessage(from, {
-          text: `❌ Commande inconnue: ${text}\n\nTapez .menu pour voir les commandes disponibles.`
+          text:
+            `❌ Commande inconnue: ${text}\n\n` +
+            `Tapez .menu pour voir les commandes.`
         });
         break;
     }
+
   } catch (error) {
+
     logger.error("❌ Error handling command:", error);
 
     await sock.sendMessage(from, {
-      text: "❌ Erreur lors du traitement de la commande."
+      text: "❌ Erreur lors du traitement."
     });
   }
 }
 
-// Start bot
-startBot().catch(err => {
+// Start Main Session
+startBot("main").catch(err => {
   logger.error("❌ Fatal error:", err);
-  process.exit(1);
 });
