@@ -1,3 +1,5 @@
+global.crypto = require("crypto").webcrypto;
+
 const {
   default: makeWASocket,
   useMultiFileAuthState,
