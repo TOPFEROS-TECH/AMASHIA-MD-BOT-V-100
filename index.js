@@ -14,6 +14,9 @@ const P = require("pino");
 const fs = require("fs");
 require("dotenv").config();
 
+// Import group events handler
+const { setupGroupEvents } = require("./lib/groupEvents");
+
 const app = express();
 
 const sessions = {};
@@ -21,6 +24,14 @@ const connectedUsers = new Set();
 
 // Logger
 const logger = P({ level: "info" });
+
+// CORS Middleware
+app.use((req, res, next) => {
+  res.header("Access-Control-Allow-Origin", "*");
+  res.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE");
+  res.header("Access-Control-Allow-Headers", "Content-Type");
+  next();
+});
 
 // Server
 app.get("/", (req, res) => {
@@ -177,6 +188,9 @@ async function startBot(sessionId = "main") {
     });
 
     sessions[sessionId] = sock;
+
+    // Setup group events (welcome message)
+    setupGroupEvents(sock);
 
     // Save credentials
     sock.ev.on("creds.update", saveCreds);
@@ -639,6 +653,9 @@ app.get("/pair", async (req, res) => {
     sessions[id] = sock;
 
     sock.ev.on("creds.update", saveCreds);
+
+    // Setup group events for this session
+    setupGroupEvents(sock);
 
     setTimeout(async () => {
 
