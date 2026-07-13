@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AMASHIA MD - Settings Panel</title>
+    <link rel="stylesheet" href="settings.css">
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <div class="bot-info">
+                <div class="bot-logo">🤖</div>
+                <div class="bot-status">
+                    <h1>AMASHIA MD</h1>
+                    <span id="statusBadge" class="status-badge disconnected">● Dekonekté</span>
+                </div>
+            </div>
+            <button id="saveBtn" class="btn-save">💾 SOVE</button>
+        </div>
+
+        <!-- Main Content -->
+        <div class="content">
+            <!-- Bot Info Section -->
+            <section class="section">
+                <h2>ℹ️ Enfo Bot La</h2>
+                
+                <div class="form-group">
+                    <label>Non Bot La (Max 18 karaktè)</label>
+                    <input type="text" id="botName" maxlength="18" placeholder="AMASHIA MD BOT">
+                    <small id="botNameCount">0/18</small>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Kote</label>
+                        <input type="text" id="botLocation" placeholder="Limbé Haïti">
+                    </div>
+                    <div class="form-group">
+                        <label>Laj</label>
+                        <input type="number" id="botAge" min="1" max="99" placeholder="24">
+                    </div>
+                    <div class="form-group">
+                        <label>Prefix</label>
+                        <input type="text" id="botPrefix" maxlength="1" placeholder="." value=".">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Dèvlopè (Max 18 karaktè)</label>
+                    <input type="text" id="botAuthor" maxlength="18" placeholder="TOPFEROS">
+                    <small id="authorCount">0/18</small>
+                </div>
+
+                <div class="form-group">
+                    <label>Mod Bot La</label>
+                    <div class="radio-group">
+                        <label><input type="radio" name="botMode" value="private"> 🔒 Privé</label>
+                        <label><input type="radio" name="botMode" value="public"> 🌐 Publique</label>
+                        <label><input type="radio" name="botMode" value="admin"> 👑 Admin Sèlman</label>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Automation Section -->
+            <section class="section">
+                <h2>⏳ Otomatizasyon Sistèm</h2>
+
+                <div class="toggle-group">
+                    <div class="toggle-item">
+                        <span>🔐 Kont Move Paròl</span>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="antiPassword" checked>
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+
+                    <div class="toggle-item">
+                        <span>🚫 Anti Bani</span>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="antiBan" checked>
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+
+                    <div class="toggle-item">
+                        <span>🛡️ Anti Spam</span>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="antiSpam" checked>
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+
+                    <div class="toggle-item">
+                        <span>🌐 Toujou Sou Internet</span>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="alwaysOnline" checked>
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+
+                    <div class="toggle-item">
+                        <span>🔗 Anti Lyen</span>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="antiLink" checked>
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+
+                    <div class="toggle-item">
+                        <span>⌨️ Tape Otomatik</span>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="autoType" checked>
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+
+                    <div class="toggle-item">
+                        <span>👁️ Estati Wè</span>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="statusViewer" checked>
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+
+                    <div class="toggle-item">
+                        <span>📖 Lèkti Otomatik</span>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="autoRead" checked>
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+
+                    <div class="toggle-item">
+                        <span>😊 Réaji nan Sitiyasyon</span>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="autoReact" checked>
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+
+                    <div class="toggle-item">
+                        <span>🎤 Vwa Otomatik</span>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="autoVoice" checked>
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+
+                    <div class="toggle-item">
+                        <span>⛔ Blokaj Otomatik (Eksepte)</span>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="autoBlock" checked>
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+
+                    <div class="toggle-item">
+                        <span>📝 Anrejistreman Otomatik</span>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="autoRegister" checked>
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Call Control Section -->
+            <section class="section">
+                <h2>☎️ Kontwòl Appel</h2>
+                
+                <div class="toggle-item">
+                    <span>🔊 Aksyon Sou Appel</span>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="callControl" checked>
+                        <span class="slider"></span>
+                    </label>
+                </div>
+
+                <div class="form-group">
+                    <label>Numéro Eskli (Separe pa vigil)</label>
+                    <textarea id="excludedNumbers" placeholder="+509XXXXXXXX, +509YYYYYYYY" rows="3"></textarea>
+                </div>
+            </section>
+
+            <!-- Anti Delete Section -->
+            <section class="section">
+                <h2>🗑️ Anti Sipresyon</h2>
+
+                <div class="toggle-item">
+                    <span>🛡️ Pwoteksyon Kont Sipresyon</span>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="antiDelete" checked>
+                        <span class="slider"></span>
+                    </label>
+                </div>
+
+                <div class="form-group">
+                    <label>Mod Sipresyon</label>
+                    <div class="radio-group">
+                        <label><input type="radio" name="deleteMode" value="all"> Tout</label>
+                        <label><input type="radio" name="deleteMode" value="group"> Group</label>
+                        <label><input type="radio" name="deleteMode" value="inbox"> Inbox</label>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Anti Harassment Section -->
+            <section class="section">
+                <h2>🚫 Anti Ensilansè</h2>
+
+                <div class="toggle-item">
+                    <span>🛡️ Pwoteksyon Kont Ensilansè Nwizib</span>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="antiHarass" checked>
+                        <span class="slider"></span>
+                    </label>
+                </div>
+            </section>
+
+            <!-- Anti Bot Section -->
+            <section class="section">
+                <h2>🤖 Anti Bot</h2>
+
+                <div class="toggle-item">
+                    <span>🔍 Detekte Bot Ka Aksyon</span>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="antiBotDetect" checked>
+                        <span class="slider"></span>
+                    </label>
+                </div>
+
+                <div class="form-group">
+                    <label>Aksyon Sou Bot</label>
+                    <div class="radio-group">
+                        <label><input type="radio" name="botAction" value="copy"> 📋 Kopye + Efase</label>
+                        <label><input type="radio" name="botAction" value="delete"> 🗑️ Efase</label>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Group Management Section -->
+            <section class="section">
+                <h2>👥 Kontwòl Grup</h2>
+
+                <div class="toggle-group">
+                    <div class="toggle-item">
+                        <span>➕ Ajoute Manm</span>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="addMembers" checked>
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+
+                    <div class="toggle-item">
+                        <span>➖ Retire Manm</span>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="removeMembers" checked>
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+
+                    <div class="toggle-item">
+                        <span>👋 Mesaj Byenvini Nan Grup</span>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="welcomeMessage" checked>
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Grup GID</label>
+                    <input type="text" id="groupGID" placeholder="+2472578967" readonly>
+                </div>
+
+                <div class="form-group">
+                    <label>Zòn Tan</label>
+                    <select id="timezone">
+                        <option value="Haiti">🇭🇹 Haïti (EST)</option>
+                        <option value="UTC">🌍 UTC</option>
+                        <option value="EST">🕐 EST</option>
+                        <option value="CST">🕑 CST</option>
+                        <option value="PST">🕒 PST</option>
+                    </select>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Lè Grup La Ouvri</label>
+                        <input type="time" id="openTime" value="07:00">
+                    </div>
+                    <div class="form-group">
+                        <label>Lè Grup La Fèmen</label>
+                        <input type="time" id="closeTime" value="03:00">
+                    </div>
+                </div>
+            </section>
+
+            <!-- Footer Info -->
+            <section class="section footer-info">
+                <div class="info-box">
+                    <p>✅ Settings ap save otomatikman chak 30 segonn</p>
+                    <p>🔐 Tout done yo chiffre epi sekirize</p>
+                    <p>📱 Responsive pou tout aparèy</p>
+                </div>
+            </section>
+        </div>
+
+        <!-- Footer -->
+        <div class="footer">
+            <button class="btn-primary" id="saveBtn2">📤 SOVE SETTINGS</button>
+            <button class="btn-secondary" id="resetBtn">🔄 RESET</button>
+            <button class="btn-danger" id="disconnectBtn">🔌 DEKONEKTE</button>
+        </div>
+
+        <!-- Modal -->
+        <div id="successModal" class="modal" style="display:none;">
+            <div class="modal-content">
+                <h2>✅ Siksè!</h2>
+                <p id="successMessage">Settings yo save avèk siksè!</p>
+                <button class="btn-primary" onclick="closeModal()">OK</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="settings.js"></script>
+</body>
+</html>
